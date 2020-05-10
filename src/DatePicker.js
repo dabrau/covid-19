@@ -13,12 +13,12 @@ export default function DatePicker({startDate, endDate, minDate, maxDate, onChan
         startDateId='startDate'
         endDate={endDate}
         endDateId='endDate'
-        onDatesChange={({ startDate, endDate }) => console.log(startDate, endDate)}
+        onDatesChange={date => onChange({start: date.startDate, end: date.endDate})}
         focusedInput={focused}
         onFocusChange={focusedInput => setFocused(focusedInput)}
         minDate={minDate}
         maxDate={maxDate}
-        isDayBlocked={(day) => day < minDate || day > maxDate}
+        isOutsideRange={day => (day.isBefore(minDate, 'day') || day.isAfter(maxDate, 'day'))}
     />
   );
 }

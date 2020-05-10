@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './App.css';
-import USAMap from 'react-usa-map';
-import { max, extent } from 'd3-array';
-import { scaleSequential } from 'd3-scale';
-import { select } from 'd3-selection';
-import { interpolateBlues } from 'd3-scale-chromatic';
-import { interpolateRound } from 'd3-interpolate';
-import { axisBottom } from 'd3-axis';
-import DatePicker from './DatePicker';
+import React, { useState, useEffect } from 'react';
+import { extent } from 'd3-array';
 import moment from 'moment';
 import Select from 'react-select';
+
+import './App.css';
+import DatePicker from './DatePicker';
+import HeatmapUSA from './HeatmapUSA'
+import LineGraph from './LineGraph';
+
+//import covidData from './covid_tracking_states_daily_2020-05-09.json'
+
 
 const camelCaseToWords = str => {
     return str.match(/^[a-z]+|[A-Z][a-z]*/g).map(function(x){
@@ -21,9 +21,9 @@ function App() {
   const [dailyStats, setDailyStats] = useState([]);
   const [metricOptions, setMetricOptions] = useState([]);
   const [selectedMetric, setSelectedMetric] = useState(null);
-  const [minMaxDates, setMinMaxDates] = useState({min: null, max: null})
-  const [selectedDateRange, setSelectedDateRange] = useState({start: null, end: null})
-  
+  const [minMaxDates, setMinMaxDates] = useState({ min: null, max: null })
+  const [selectedDateRange, setSelectedDateRange] = useState({ start: null, end: null })
+  const [visibleMetrics, setVisibleMetrics] = useState([]);
 
   useEffect(() => {
     fetch('https://covidtracking.com/api/states/daily')
@@ -68,84 +68,23 @@ function App() {
         min: moment(String(minDate)),
         max: moment(String(maxDate))
       });
-      setSelectedDateRange({
-        start: moment(String(minDate)),
-        end: moment(String(maxDate))
-      });
     }
-  }, [dailyStats])
-
-  const dates = dailyStats.map(stat => stat.date);
-  const lastDate = dates ? max(dates) : null;
-
-  const selectedDayStats = dailyStats
-    .filter(stats => stats.date === lastDate);
-
-
-  const maxValue = max(selectedDayStats, d => d.positive)
-  const colorScale = scaleSequential()
-    .domain([0, maxValue])
-    .interpolator(interpolateBlues);
-
-
-  const statesConfig = selectedDayStats
-    .reduce((acc, usState) => {
-      return {
-        ...acc,
-        [usState.state]: {
-          fill: colorScale(usState.positive)
-        }
-      };
-    }, {});
-
-  const legend = useRef(null);
+  }, [dailyStats]);
 
   useEffect(() => {
-    const tickSize = 6
-    const width = 320
-    const height = 44 + tickSize
-    const marginTop = 18
-    const marginRight = 0
-    const marginBottom = 16 + tickSize
-    const marginLeft = 0
-    const title = 'COVID 19 Postive'
+    const visibleStateMetrics = dailyStats
+      .filter(statesMetrics => {
+        const date = moment(String(statesMetrics.date));
+        return date.isSame(selectedDateRange.end, 'day');
+      });
+    setVisibleMetrics(visibleStateMetrics)
+  }, [dailyStats, selectedDateRange]);
 
-    const legendSvg = select(legend.current)
-      .attr('width', width)
-      .attr('height', height)
-      .attr('viewBox', [0, 0, width, height])
-      .style('overflow', 'visible')
-      .style('display', 'block');
+  const dataAvailableStates = new Set(dailyStats.map(stat => stat.state));
 
-    let tickAdjust = g => g.selectAll('.tick line').attr('y1', marginTop + marginBottom - height);
-    let x;
-
-    x = Object.assign(colorScale.copy()
-        .interpolator(interpolateRound(marginLeft, width - marginRight)),
-        {range() { return [marginLeft, width - marginRight]; }});
-
-
-    legendSvg.append('image')
-        .attr('x', marginLeft)
-        .attr('y', marginTop)
-        .attr('width', width - marginLeft - marginRight)
-        .attr('height', height)
-        .attr('preserveAspectRatio', 'none')
-        .attr('xlink:href', ramp(colorScale.interpolator(), width).toDataURL());
-
-    legendSvg.append('g')
-      .attr('transform', `translate(0,${height - marginBottom})`)
-      .call(axisBottom(x))
-      .call(tickAdjust)
-      .call(g => g.select('.domain').remove())
-      .call(g => g.append('text')
-        .attr('x', marginLeft)
-        .attr('y', marginTop + marginBottom - height - 6)
-        .attr('fill', 'currentColor')
-        .attr('text-anchor', 'start')
-        .attr('font-weight', 'bold')
-        .text(title));
-  }, [colorScale])
+  const heatmapTitle = selectedMetric ? `COVID 19 - ${selectedMetric.label}` : '';
+  const legendTitle = selectedMetric ? selectedMetric.label  : '';
+  const heatmapDescription = selectedDateRange.end ? selectedDateRange.end.format('YYYY-MM-DD') : '';
 
   return (
     <div className='App'>
@@ -155,29 +94,29 @@ function App() {
         onChange={setSelectedMetric}
         options={metricOptions}
       />
-      {minMaxDates.min && minMaxDates.max &&
-        <DatePicker
-          startDate={selectedDateRange.start}
-          endDate={selectedDateRange.end}
-          minDate={minMaxDates.min}
-          maxDate={minMaxDates.max}
-          onChange={null}
+      <DatePicker
+        startDate={selectedDateRange.start}
+        endDate={selectedDateRange.end}
+        minDate={minMaxDates.min}
+        maxDate={minMaxDates.max}
+        onChange={setSelectedDateRange}
+      />
+      <HeatmapUSA
+        title={heatmapTitle}
+        description={heatmapDescription}
+        legendTitle={legendTitle}
+        statesMetrics={visibleMetrics}
+        selectedMetric={selectedMetric}
+        availableStates={[...dataAvailableStates]}
+      />
+      {dailyStats.length > 0 && selectedMetric &&
+        <LineGraph
+          covidData={dailyStats}
+          selectedMetric={selectedMetric}
         />
       }
-      <svg ref={legend}></svg>
-      <USAMap customize={statesConfig} />
     </div>
   );
-}
-
-function ramp(color, n = 256) {
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d');
-  for (let i = 0; i < n; ++i) {
-    context.fillStyle = color(i / (n - 1));
-    context.fillRect(i, 0, 1, 40);
-  }
-  return canvas;
 }
 
 export default App;
