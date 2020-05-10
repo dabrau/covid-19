@@ -1,82 +1,69 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import moment from 'moment';
+import { debounce } from 'lodash';
 import {
     Charts,
     ChartContainer,
     ChartRow,
     YAxis,
-    LineChart,
-    TimeMarker
+    LineChart
 } from 'react-timeseries-charts';
-import { TimeSeries } from 'pondjs';
-//import covidData from './covid_tracking_states_daily_2020-05-09.json'
+import { TimeSeries, TimeRange } from 'pondjs';
+
+import DailyCovidTrackingContext from './DailyCovidTrackingContext';
 
 
-export default function LineGraph({covidData, selectedMetric, statesFormat}) {
-  const covidTS = covidDataToTimeSeries(covidData);
-  const stateMetricLines = covidDataToStatesTimeSeries(covidData)
+export default function LineGraph({selectedMetric, selectedDate, onTrackerChanged}) {
+  const covidTracking = useContext(DailyCovidTrackingContext);
+
+  const metricData = covidTracking
+    .filter(d => d[selectedMetric.value]);
+
+  const metricValues = metricData
+    .map(d => d[selectedMetric.value]);
+  const minValue = Math.min(...metricValues);
+  const maxValue = Math.max(...metricValues);
+
+  const dates = metricData.map(d => d.standardizedDate);
+  const timerange = new TimeRange(moment.min(dates), moment.max(dates));
+  
+  const stateMetricLines = covidDataToStatesTimeSeries(metricData, selectedMetric.value)
     .map(stateTS =>
       <LineChart
         key={stateTS.name}
         axis='axis1'
         series={stateTS}
-        columns={[selectedMetric.value]}
+        columns={['value']}
       />);
 
-  const titleStyle = {
-    fontWeight: 200,
-    fill: 'black'
-  }
+  const onTimeSelectionChange = debounce(d => onTrackerChanged(moment(d)), 20)
 
   return (
     <ChartContainer
-      title={`COVID 19 - ${selectedMetric.label}`}
-      titleStyle={titleStyle}
-      timeRange={covidTS.timerange()}
+      paddingLeft={-45}
+      paddingBottom={-10}
+      timeAxisHeight={35}
+      timeRange={timerange}
       width={900}
       style={{background: 'white'}}
-      trackerPosition={null}
+      trackerPosition={selectedDate.toDate()}
+      onTrackerChanged={onTimeSelectionChange}
     >
-      <ChartRow height='150'>
+      <ChartRow height='70'>
         <YAxis id='axis1'
-          width='60'
           type='linear' 
-          min={covidTS.collection().min(selectedMetric.value)}
-          max={covidTS.collection().max(selectedMetric.value)}
+          min={minValue}
+          max={maxValue}
         />
-        <TimeMarker></TimeMarker>
         <Charts>
-            {stateMetricLines}
+          {stateMetricLines}
         </Charts>
       </ChartRow>
     </ChartContainer>
   )
 }
 
-
-
-function covidDataToTimeSeries(covidData) {
-  const attributes = Array.from(new Set(covidData.flatMap(d => Object.keys(d))));
-  const columns = ['index', ...attributes];
-
-  const points = covidData
-    .sort((a,b) => moment(String(a.date)).unix() - moment(String(b.date)).unix())
-    .map(event => [
-      moment(String(event.date)).format('YYYY-MM-DD'),
-      ...attributes.map(att => event[att])
-    ])
-
-  const tsData = {
-    'name': 'daily covid tracking',
-    columns,
-    points
-  };
-  
-  return new TimeSeries(tsData);
-}
-
-
-function covidDataToStatesTimeSeries(covidData) {
+function covidDataToStatesTimeSeries(covidData, selectedMetric) {
   const dataByStates = covidData
     .reduce((acc, curr) => {
       if (acc[curr.state]) {
@@ -85,22 +72,18 @@ function covidDataToStatesTimeSeries(covidData) {
         acc[curr.state] = [curr];
       }
       return acc;
-    },
-    {});
-
-  const attributes = Array.from(new Set(covidData.flatMap(d => Object.keys(d))));
-  const columns = ['index', ...attributes];
+    }, {});
 
   return Object.values(dataByStates)
     .map(stateData => 
       new TimeSeries({
         name: stateData.state,
-        columns,
+        columns: ['index', 'value'],
         points: stateData
-          .sort((a,b) => moment(String(a.date)).unix() - moment(String(b.date)).unix())
+          .sort((a,b) => a.standardizedDate.unix() - b.standardizedDate.unix())
           .map(event => [
-            moment(String(event.date)).format('YYYY-MM-DD'),
-            ...attributes.map(att => event[att])
+            event.standardizedDate.format('YYYY-MM-DD'),
+            event[selectedMetric]
           ])
       })
     );

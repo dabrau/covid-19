@@ -9,6 +9,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+h1, p {
+  margin: 0px;
+}
+
+.self-promotion {
+  background-color: white;
+  padding-left: 10px;
+}
+
+.title {
+  margin-bottom: 16px;
+}
+
+.title, .App {
+  margin-left: 10px;
+}
+
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

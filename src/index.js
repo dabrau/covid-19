@@ -2,11 +2,17 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
+import { DailyCovidTrackingProvider } from './DailyCovidTrackingContext'
+import { AppContextProvider } from './AppContext'
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <DailyCovidTrackingProvider>
+      <AppContextProvider>
+        <App />
+      </AppContextProvider>
+    </DailyCovidTrackingProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

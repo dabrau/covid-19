@@ -1,47 +1,51 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useContext } from 'react';
 import USAMap from 'react-usa-map';
-import { max } from 'd3-array';
+import { extent } from 'd3-array';
 import { scaleSequential } from 'd3-scale';
 import { select } from 'd3-selection';
 import { interpolateBlues } from 'd3-scale-chromatic';
 import { interpolateRound } from 'd3-interpolate';
 import { axisBottom } from 'd3-axis';
 
-export default function HeatmapUSA({statesMetrics, selectedMetric, availableStates, title, legendTitle, description}) {
+import DailyCovidTrackingContext from './DailyCovidTrackingContext';
+
+
+export default function HeatmapUSA({selectedDate, selectedMetric}) {
+  const covidTracking = useContext(DailyCovidTrackingContext);
+
+  const visibleData = covidTracking
+    .filter(d => d.standardizedDate.isSame(selectedDate, 'day'));
+
+  const metricDomain = extent(covidTracking.map(d => d[selectedMetric.value]))
   const colorScale = scaleSequential()
-      .domain([0, 1])
+      .domain(metricDomain)
       .interpolator(interpolateBlues);
 
-  const statesConfig = availableStates
-    .reduce((acc, state) => ({
-        ...acc,
-        [state]: { 
-          fill: '#808080',
-          stroke: 'white'
-        }
-    }), {});
-
-  if (selectedMetric) {
-    const maxValue = max(statesMetrics, d => d[selectedMetric.value])
-    colorScale.domain([0, maxValue]);
-
-    statesMetrics.forEach((metric => {
-      statesConfig[metric.state]['fill'] = colorScale(metric[selectedMetric.value])
-    }))
-  }
+  const statesConfig = visibleData.reduce((acc, d) => {
+    acc[d.state] = {
+      fill: colorScale(d[selectedMetric.value])
+    };
+    return acc;
+  }, {});
 
   return (
     <div>
-      <h5>{title}</h5>
-      <p>{description}</p>
-      <Legend colorScale={colorScale} legendTitle={legendTitle}/>
-      <USAMap customize={statesConfig} />
+      <h4>{selectedDate.format('MM/DD/YYYY')}</h4>
+      <Legend
+        colorScale={colorScale}
+        legendTitle={`COVID ${selectedMetric.label}`}
+      />
+      <USAMap
+        defaultFill='#808080'
+        customize={statesConfig}
+      />
     </div>
   );
 }
 
+
 function colorRamp(colorScale, width) {
-  const canvas = document.createElement('canvas')
+  const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
   for (let i = 0; i < width; ++i) {
     context.fillStyle = colorScale(i / (width - 1));
@@ -50,22 +54,23 @@ function colorRamp(colorScale, width) {
   return canvas;
 }
 
+
 function Legend({colorScale, legendTitle}) {
-  const tickSize = 6
-  const width = 320
-  const height = 44 + tickSize
-  const marginTop = 18
-  const marginRight = 0
-  const marginBottom = 16 + tickSize
-  const marginLeft = 0
-  const title = legendTitle
+  const tickSize = 6;
+  const width = 320;
+  const height = 44 + tickSize;
+  const marginTop = 18;
+  const marginRight = 0;
+  const marginBottom = 16 + tickSize;
+  const marginLeft = 0;
+  const title = legendTitle;
   
   const legendRef = useRef(null);
 
   useEffect(() => {
-    const legendSvg = select(legendRef.current)
+    const legendSvg = select(legendRef.current);
 
-    legendSvg.selectAll('*').remove()
+    legendSvg.selectAll('*').remove();
 
     legendSvg
       .attr('width', width)
