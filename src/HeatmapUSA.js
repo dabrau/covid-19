@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useContext } from 'react';
+import React, { useRef, useLayoutEffect, useContext, useEffect } from 'react';
 import USAMap from 'react-usa-map';
 import { extent } from 'd3-array';
 import { scaleSequential } from 'd3-scale';
@@ -6,36 +6,63 @@ import { select } from 'd3-selection';
 import { interpolateBlues } from 'd3-scale-chromatic';
 import { interpolateRound } from 'd3-interpolate';
 import { axisBottom } from 'd3-axis';
+import './HeatmapUSA.css';
 
 import DailyCovidTrackingContext from './DailyCovidTrackingContext';
 
 
-export default function HeatmapUSA({selectedDate, selectedMetric}) {
-  const covidTracking = useContext(DailyCovidTrackingContext);
+export default function HeatmapUSA({
+  selectedDate,
+  selectedMetric,
+  selectedStates,
+  toggleSelectedState
+}) {
+  const { metrics } = useContext(DailyCovidTrackingContext);
+  const { timeseries, maxValue, minValue } = metrics[selectedMetric.value]
 
-  const visibleData = covidTracking
-    .filter(d => d.standardizedDate.isSame(selectedDate, 'day'));
-
-  const metricDomain = extent(covidTracking.map(d => d[selectedMetric.value]))
+  const data = timeseries.atTime(selectedDate.toDate()).data()
   const colorScale = scaleSequential()
-      .domain(metricDomain)
+      .domain([minValue, maxValue])
       .interpolator(interpolateBlues);
 
-  const statesConfig = visibleData.reduce((acc, d) => {
-    acc[d.state] = {
-      fill: colorScale(d[selectedMetric.value])
+  const statesConfig = Array.from(data.entries()).reduce((acc, [state, value]) => {
+    acc[state] = {
+      fill: colorScale(value)
     };
     return acc;
   }, {});
+  
+  const clickHandler = event => toggleSelectedState(event.target.dataset.name)
+  Array.from(data.keys()).forEach(st => {
+    if (statesConfig[st]) {
+      statesConfig[st].clickHandler = clickHandler;
+    } else {
+      statesConfig[st] = { clickHandler };
+    }
+  })
+
+  const hmRef = useRef();
+  useLayoutEffect(() => {
+    Array.from(hmRef.current.getElementsByClassName('state'))
+      .forEach(path => path.style.stroke = '')
+
+    Object.entries(selectedStates)
+      .forEach(([state, color]) => {
+        Array.from(hmRef.current.getElementsByClassName(state))
+          .forEach(path => path.style.stroke = color);
+      });
+  }, [selectedStates]);
 
   return (
-    <div>
+    <div className="heatmap" ref={hmRef}>
       <h4>{selectedDate.format('MM/DD/YYYY')}</h4>
       <Legend
         colorScale={colorScale}
         legendTitle={`COVID ${selectedMetric.label}`}
       />
       <USAMap
+        height={300}
+        width={700}
         defaultFill='#808080'
         customize={statesConfig}
       />

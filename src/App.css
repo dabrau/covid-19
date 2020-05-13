@@ -1,0 +1,22 @@
+.title {
+  margin-bottom: 16px;
+}
+
+.App {
+  margin-left: 10px;
+}
+
+.selectors {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.side-block {
+  height: 100%;
+  width: 330px;
+  margin-right: 10px;
+}
+
+.side-block > div {
+  padding-bottom: 5px;
+}

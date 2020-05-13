@@ -1,59 +1,49 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useReducer } from 'react';
 import moment from 'moment';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 import DailyCovidTrackingContext from './DailyCovidTrackingContext';
 
 
 const AppContext = React.createContext(undefined);
 
+const defaultMetric = metricNameToOption('positive')
+const defaultDate = moment('2020-04-12');
+const defaultStartDate =  defaultDate.clone().subtract(7, 'days');
+const defaultEndDate = defaultDate.clone().add(7, 'days');
+
 
 export function AppContextProvider({children}) {
-  const covidTracking = useContext(DailyCovidTrackingContext);
+  const { metricNames } = useContext(DailyCovidTrackingContext);
 
-  const [selectedMetric, setSelectedMetric] = useState({
-    value: 'positive',
-    label: 'Positive'
-  });
-
-  const defaultDate = moment('2020-04-12');
-  const [selectedDate, setSelectedDate] = useState(defaultDate);
-  const [selectedDateRange, setSelectedDateRange] = useState({start: null, end: null});
-
-  const [metricOptions, setMetricOptions] = useState([]);
-  const [minMaxDates, setMinMaxDates] = useState({min: null, max: null });
+  const metricOptions = metricNames.map(m => metricNameToOption(m));
+  const [selectedMetric, setSelectedMetric] = useState(defaultMetric);
   
-  useEffect(() => {
-    // update selectable options
-    const options = Array.from(new Set(
-      covidTracking
-        .flatMap(dailyStat => 
-            Object.entries(dailyStat)
-              .filter(([metric, value]) => Number.isInteger(value))
-              .map(([metric, _]) => metric)
-        )
-    )).map(metric => ({
-      value: metric,
-      label: camelCaseToWords(metric)
-    }));
-    setMetricOptions(options);
+  const [selectedDate, setSelectedDate] = useState(defaultDate);
+  const [selectedDateRange, setSelectedDateRange] = useState({start: defaultStartDate, end: defaultEndDate});
 
-    // update min and max selectable dates 
-    const dates = covidTracking.map(d => d.standardizedDate)
-    setMinMaxDates({
-      min: moment.min(dates),
-      max: moment.max(dates)
-    })
-
-  }, [covidTracking]);
+  //const [minMaxDates, setMinMaxDates] = useState({min: null, max: null });
+  
+  // useEffect(() => {
+  //   const options = metricNames.map(m => metricNameToOption(m));
+  //   setMetricOptions(options);
+  // }, [metricNames]);
 
   const updateSelectedDate = (date) => {
     if (
       date.isValid &&
-      date.isAfter(minMaxDates.min) &&
-      date.isBefore(minMaxDates.max)
+      date.isAfter(selectedDateRange.start) &&
+      date.isBefore(selectedDateRange.end)
     ) {
-      setSelectedDate(date)
+      setSelectedDate(date);
     }
-  }
+  };
+
+  const [selectedStates, toggleSelectedState] = useReducer(selectStatesReducer, {
+    colorIndex: 2,
+      states : {
+        'TX': schemeCategory10[1]
+      }
+  });
 
   const context = {
     metricOptions,
@@ -63,8 +53,10 @@ export function AppContextProvider({children}) {
     updateSelectedDate,
     selectedDateRange,
     updateSelectedDateRange: setSelectedDateRange,
-    minDate: minMaxDates.min,
-    maxDate: minMaxDates.max
+    // minDate: minMaxDates.min,
+    // maxDate: minMaxDates.max,
+    toggleSelectedState,
+    selectedStates: selectedStates.states
   }
 
   return (
@@ -72,6 +64,26 @@ export function AppContextProvider({children}) {
       {children}
     </AppContext.Provider>
   );
+}
+
+
+function selectStatesReducer(prevState, unitedState) {
+  const newState = {...prevState, states: {...prevState.states}};
+  if (prevState.states.hasOwnProperty(unitedState)) {
+    delete newState.states[unitedState];
+  } else {
+    newState.states[unitedState] = schemeCategory10[newState.colorIndex % schemeCategory10.length];
+    newState.colorIndex = newState.colorIndex + 1;
+  }
+
+  return newState;
+}
+
+function metricNameToOption(metricName) {
+  return {
+    value: metricName,
+    label: camelCaseToWords(metricName)
+  };
 }
 
 
