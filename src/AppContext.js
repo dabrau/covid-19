@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useReducer } from 'react';
+import React, { useState, useContext, useReducer } from 'react';
 import moment from 'moment';
 import { schemeCategory10 } from 'd3-scale-chromatic';
 import DailyCovidTrackingContext from './DailyCovidTrackingContext';
@@ -15,7 +15,9 @@ const defaultEndDate = defaultDate.clone().add(7, 'days');
 export function AppContextProvider({children}) {
   const { metricNames } = useContext(DailyCovidTrackingContext);
 
-  const metricOptions = metricNames.map(m => metricNameToOption(m));
+  const metricOptions = metricNames
+    .filter(m => !['state', 'date'].includes(m))
+    .map(m => metricNameToOption(m));
   const [selectedMetric, setSelectedMetric] = useState(defaultMetric);
   
   const [selectedDate, setSelectedDate] = useState(defaultDate);
@@ -53,8 +55,6 @@ export function AppContextProvider({children}) {
     updateSelectedDate,
     selectedDateRange,
     updateSelectedDateRange: setSelectedDateRange,
-    // minDate: minMaxDates.min,
-    // maxDate: minMaxDates.max,
     toggleSelectedState,
     selectedStates: selectedStates.states
   }

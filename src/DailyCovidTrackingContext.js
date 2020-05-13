@@ -12,11 +12,11 @@ export function DailyCovidTrackingProvider({children}) {
   const [covidTracking, setCovidTracking] = useState(transformCovidTracking(DailyCovidTracking));
   
 
-  // useEffect(() => {
-  //   fetch('https://covidtracking.com/api/states/daily')
-  //     .then(resp => resp.json())
-  //     .then(data => setCovidTracking(transformCovidTracking(data)));
-  // }, []);
+  useEffect(() => {
+    fetch('https://covidtracking.com/api/states/daily')
+      .then(resp => resp.json())
+      .then(data => setCovidTracking(transformCovidTracking(data)));
+  }, []);
 
   return (
     <DailyCovidTrackingContext.Provider value={covidTracking}>

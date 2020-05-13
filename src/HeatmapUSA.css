@@ -1,3 +1,7 @@
+.heatmap {
+  margin-top: 10px;
+}
+
 path {
   pointer-events: all;
 }

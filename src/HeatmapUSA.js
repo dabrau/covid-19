@@ -1,6 +1,5 @@
 import React, { useRef, useLayoutEffect, useContext, useEffect } from 'react';
 import USAMap from 'react-usa-map';
-import { extent } from 'd3-array';
 import { scaleSequential } from 'd3-scale';
 import { select } from 'd3-selection';
 import { interpolateBlues } from 'd3-scale-chromatic';
@@ -61,8 +60,8 @@ export default function HeatmapUSA({
         legendTitle={`COVID ${selectedMetric.label}`}
       />
       <USAMap
-        height={300}
-        width={700}
+        height={250}
+        width={360}
         defaultFill='#808080'
         customize={statesConfig}
       />

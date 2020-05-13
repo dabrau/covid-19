@@ -12,11 +12,19 @@
 }
 
 .side-block {
-  height: 100%;
   width: 330px;
   margin-right: 10px;
+  margin: 0px;
+  display: inline-block;
+  margin-right: 40px;
 }
 
 .side-block > div {
   padding-bottom: 5px;
+}
+
+.plots {
+  display: inline-block;
+  background-color: 'green';
+  height: 100%;
 }

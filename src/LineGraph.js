@@ -1,6 +1,5 @@
-import React, { useContext, Fragment, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import moment from 'moment';
-import { debounce } from 'lodash';
 import {
     Charts,
     ChartContainer,
@@ -12,12 +11,9 @@ import {
     LabelAxis,
     Brush
 } from 'react-timeseries-charts';
-import { TimeSeries, TimeRange } from 'pondjs';
+import { TimeRange } from 'pondjs';
 
 import DailyCovidTrackingContext from './DailyCovidTrackingContext';
-
-
-
 
 
 export default function LineGraph({
@@ -29,9 +25,8 @@ export default function LineGraph({
   updateSelectedDateRange
 }) {
   const { metrics } = useContext(DailyCovidTrackingContext);
-  const { timeseries, maxValue, minValue, maxDate, minDate } = metrics[selectedMetric.value]
+  const { timeseries } = metrics[selectedMetric.value]
 
-  const timerange = new TimeRange(minDate, maxDate);
   const { start, end } = selectedDateRange;
   const timeWindow = new TimeRange(start, end);
     
@@ -76,7 +71,7 @@ export default function LineGraph({
       paddingRight={30}
       timeAxisHeight={35}
       timeRange={timeWindow}
-      width={900}
+      width={400}
       style={{background: 'white'}}
       trackerPosition={trackerPosition}
       onTrackerChanged={dateSelectionChange}
@@ -114,7 +109,7 @@ export function DateRangeSelector({
        paddingBottom={-10}
        paddingTop={5}
        timeRange={timeseries.timerange()}
-       width={900}
+       width={400}
        style={{background: 'white'}}
        trackerPosition={selectedDate.toDate()}
     >
