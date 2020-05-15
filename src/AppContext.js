@@ -4,6 +4,7 @@ import { schemeCategory10 } from 'd3-scale-chromatic';
 import DailyCovidTrackingContext from './DailyCovidTrackingContext';
 
 
+
 const AppContext = React.createContext(undefined);
 
 const defaultMetric = metricNameToOption('positive')
@@ -23,13 +24,6 @@ export function AppContextProvider({children}) {
   const [selectedDate, setSelectedDate] = useState(defaultDate);
   const [selectedDateRange, setSelectedDateRange] = useState({start: defaultStartDate, end: defaultEndDate});
 
-  //const [minMaxDates, setMinMaxDates] = useState({min: null, max: null });
-  
-  // useEffect(() => {
-  //   const options = metricNames.map(m => metricNameToOption(m));
-  //   setMetricOptions(options);
-  // }, [metricNames]);
-
   const updateSelectedDate = (date) => {
     if (
       date.isValid &&
@@ -40,10 +34,25 @@ export function AppContextProvider({children}) {
     }
   };
 
+  const updateSelectedDateRange = ({start, end}) => {
+    if (selectedDate.isAfter(end)) {
+      setSelectedDate(end);
+    }
+
+    if (selectedDate.isBefore(start)) {
+      setSelectedDate(start);
+    }
+
+    setSelectedDateRange({start, end});
+  }
+
   const [selectedStates, toggleSelectedState] = useReducer(selectStatesReducer, {
-    colorIndex: 2,
+    colorIndex: 5,
       states : {
-        'TX': schemeCategory10[1]
+        'TX': schemeCategory10[1],
+        'CA': schemeCategory10[2],
+        'NY': schemeCategory10[3],
+        'GA': schemeCategory10[4]
       }
   });
 
@@ -54,7 +63,7 @@ export function AppContextProvider({children}) {
     selectedDate,
     updateSelectedDate,
     selectedDateRange,
-    updateSelectedDateRange: setSelectedDateRange,
+    updateSelectedDateRange,
     toggleSelectedState,
     selectedStates: selectedStates.states
   }

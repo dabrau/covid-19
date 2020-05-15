@@ -19,7 +19,7 @@ export default function HeatmapUSA({
   const { metrics } = useContext(DailyCovidTrackingContext);
   const { timeseries, maxValue, minValue } = metrics[selectedMetric.value]
 
-  const data = timeseries.atTime(selectedDate.toDate()).data()
+  const data = timeseries.atTime(selectedDate.toDate()).data();
   const colorScale = scaleSequential()
       .domain([minValue, maxValue])
       .interpolator(interpolateBlues);

@@ -7,11 +7,12 @@ import {
     YAxis,
     LineChart,
     styler,
-    ValueAxis,
     LabelAxis,
     Brush
 } from 'react-timeseries-charts';
 import { TimeRange } from 'pondjs';
+import debounce from 'lodash.debounce';
+import throttle from 'lodash.throttle';
 
 import DailyCovidTrackingContext from './DailyCovidTrackingContext';
 
@@ -29,6 +30,20 @@ export default function LineGraph({
 
   const { start, end } = selectedDateRange;
   const timeWindow = new TimeRange(start, end);
+
+  const [trackerPosition, setTrackerPosition] = useState(selectedDate.toDate());
+
+  const updateDate = debounce(d => onTrackerChanged(moment(d), 30));
+  const updateTracker = throttle(setTrackerPosition, 10)
+
+  const dateSelectionChange = d => {
+    updateTracker(d)
+    const date = moment(d);
+    if (date.isBefore(selectedDate, 'day') || date.isAfter(selectedDate, 'day')) {
+      updateDate(date);
+    }
+    setTrackerPosition(d)
+  }
     
   const timeseriesWindow = timeseries.crop(timeWindow);
   const stateMetricLines = Object.entries(selectedStates)
@@ -39,39 +54,48 @@ export default function LineGraph({
           columns: [state],
           style: styler([{key: state, color: color, width: 3}])
       };
+
+      const axisStyle = {
+        label: { fontSize: 30, textAnchor: 'middle', fill: color }
+      };
+
+      const min = timeseriesWindow.collection().min(state);
+      const max = timeseriesWindow.collection().max(state);
+      const value = timeseriesWindow.atTime(selectedDate.toDate())
+        .data().get(state)
+
+      const axisValues = [
+        {label: 'max', value: max},
+        {label: 'min', value: min},
+        {label: 'value', value: value}
+      ];
+
       return (
         <ChartRow height='100' key={state}>
           <LabelAxis id={state + 'axis'}
-            width={140}
-            min={timeseriesWindow.collection().min(state)}
-            max={timeseriesWindow.collection().max(state)}
+            label={state}
+            values={axisValues}
+            hideScale={true}
+            style={axisStyle}
+            width={150}
+            min={min}
+            max={max}
           />
           <Charts>
             <LineChart key={state} {...props}/>
           </Charts>
-          <ValueAxis value={600} id={state} width={140} detail='show some shit'/>
         </ChartRow>
       );
     });
 
-  const [trackerPosition, setTrackerPosition] = useState(selectedDate.toDate());
-
-  const dateSelectionChange = d => {
-    setTrackerPosition(d)
-    const date = moment(d);
-    if (date.isBefore(selectedDate, 'day') || date.isAfter(selectedDate, 'day')) {
-      onTrackerChanged(moment(d));
-    }
-  };
-
   return (
     <ChartContainer
-      paddingLeft={-45}
-      paddingBottom={-10}
-      paddingRight={30}
+      timeAxisAngledLabels={true}
+      paddingRight={10}
+      paddingBottom={15}
       timeAxisHeight={35}
       timeRange={timeWindow}
-      width={400}
+      width={380}
       style={{background: 'white'}}
       trackerPosition={trackerPosition}
       onTrackerChanged={dateSelectionChange}
@@ -80,6 +104,7 @@ export default function LineGraph({
     </ChartContainer>
   );
 }
+
 
 export function DateRangeSelector({
   selectedDateRange,
@@ -91,7 +116,16 @@ export function DateRangeSelector({
   const { metrics } = useContext(DailyCovidTrackingContext);
   const { timeseries, maxValue, minValue } = metrics[selectedMetric.value];
 
-  const onTimeRangeChanged = tr => updateSelectedDateRange({start: tr.begin(), end: tr.end()});
+  const [timerange, setTimeRange] = useState(new TimeRange(selectedDateRange.start, selectedDateRange.end))
+
+  const updateDateRange = debounce(tr => {
+    updateSelectedDateRange({start: moment(tr.begin()), end: moment(tr.end())})
+  }, 30);
+  const updateBrushRange = throttle(tr => setTimeRange(tr), 10);
+  const onTimeRangeChanged = tr => {
+    updateDateRange(tr);
+    updateBrushRange(tr);
+  };
 
   const style = styler(
     timeseries.columns()
@@ -104,18 +138,19 @@ export function DateRangeSelector({
 
   return (
     <ChartContainer
-       paddingLeft={30}
-       paddingRight={30}
-       paddingBottom={-10}
-       paddingTop={5}
-       timeRange={timeseries.timerange()}
-       width={400}
-       style={{background: 'white'}}
-       trackerPosition={selectedDate.toDate()}
+      timeAxisAngledLabels={true}
+      paddingRight={10}
+      paddingLeft={-45}
+      paddingBottom={15}
+      paddingTop={5}
+      timeRange={timeseries.timerange()}
+      width={330}
+      style={{background: 'white'}}
+      trackerPosition={selectedDate.toDate()}
     >
       <ChartRow height='50'>
         <Brush
-          timeRange={new TimeRange(selectedDateRange.start, selectedDateRange.end)}
+          timeRange={timerange}
           onTimeRangeChanged={onTimeRangeChanged}
         />
         <YAxis id='axis1'

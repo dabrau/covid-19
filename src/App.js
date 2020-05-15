@@ -24,7 +24,7 @@ function App(props) {
     <div className='App'>
       <div className="title">
         <h1>COVID Tracker</h1>
-        <p>datasource: 
+        <p>data source: 
           <a href="https://covidtracking.com/" target="_blank">The COVID Tracking Project</a>
         </p>
       </div>
@@ -34,6 +34,13 @@ function App(props) {
           onChange={updateSelectedMetric}
           options={metricOptions}
         />
+        <DateRangeSelector
+          selectedMetric={selectedMetric}
+          selectedDate={selectedDate}
+          selectedDateRange={selectedDateRange}
+          updateSelectedDateRange={updateSelectedDateRange}
+          selectedStates={selectedStates}
+        />
         <HeatmapUSA
          selectedDate={selectedDate}
          selectedMetric={selectedMetric}
@@ -42,13 +49,7 @@ function App(props) {
        />
      </div>
      <div className='plots'>
-        <DateRangeSelector
-          selectedMetric={selectedMetric}
-          selectedDate={selectedDate}
-          selectedDateRange={selectedDateRange}
-          updateSelectedDateRange={updateSelectedDateRange}
-          selectedStates={selectedStates}
-        />
+
         <LineGraph
           selectedMetric={selectedMetric}
           selectedDate={selectedDate}
