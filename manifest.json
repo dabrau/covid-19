@@ -1,0 +1,15 @@
+{
+  "short_name": "Covid19",
+  "name": "COVID Tracker",
+  "icons": [
+    {
+      "src": "iconfinder_virus-06_5862628.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
