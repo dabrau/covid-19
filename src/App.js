@@ -8,7 +8,7 @@ import LineGraph, { DateRangeSelector } from './LineGraph';
 
 
 function App(props) {
-    const {
+  const {
     selectedMetric,
     selectedDate,
     updateSelectedDate,
@@ -18,6 +18,7 @@ function App(props) {
     selectedStates,
     selectedDateRange,
     updateSelectedDateRange,
+    selectedMetricData
   } = useContext(AppContext);
 
   return (
@@ -35,26 +36,25 @@ function App(props) {
           options={metricOptions}
         />
         <DateRangeSelector
-          selectedMetric={selectedMetric}
+          selectedMetricData={selectedMetricData}
           selectedDate={selectedDate}
           selectedDateRange={selectedDateRange}
           updateSelectedDateRange={updateSelectedDateRange}
           selectedStates={selectedStates}
         />
         <HeatmapUSA
-         selectedDate={selectedDate}
-         selectedMetric={selectedMetric}
-         toggleSelectedState={toggleSelectedState}
-         selectedStates={selectedStates}
-       />
-     </div>
-     <div className='plots'>
-
+          selectedDate={selectedDate}
+          selectedMetricData={selectedMetricData}
+          toggleSelectedState={toggleSelectedState}
+          selectedStates={selectedStates}
+        />
+      </div>
+      <div className='plots'>
         <LineGraph
-          selectedMetric={selectedMetric}
           selectedDate={selectedDate}
           onTrackerChanged={updateSelectedDate}
           selectedStates={selectedStates}
+          selectedMetricData={selectedMetricData}
           selectedDateRange={selectedDateRange}
           updateSelectedDateRange={updateSelectedDateRange}
         />
@@ -62,5 +62,7 @@ function App(props) {
     </div>
   );
 }
+
+
 
 export default App;

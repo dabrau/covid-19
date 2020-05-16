@@ -1,4 +1,4 @@
-import React, { useRef, useLayoutEffect, useContext, useEffect } from 'react';
+import React, { useRef, useLayoutEffect, useEffect } from 'react';
 import USAMap from 'react-usa-map';
 import { scaleSequential } from 'd3-scale';
 import { select } from 'd3-selection';
@@ -7,17 +7,14 @@ import { interpolateRound } from 'd3-interpolate';
 import { axisBottom } from 'd3-axis';
 import './HeatmapUSA.css';
 
-import DailyCovidTrackingContext from './DailyCovidTrackingContext';
-
 
 export default function HeatmapUSA({
   selectedDate,
-  selectedMetric,
   selectedStates,
-  toggleSelectedState
+  toggleSelectedState,
+  selectedMetricData
 }) {
-  const { metrics } = useContext(DailyCovidTrackingContext);
-  const { timeseries, maxValue, minValue } = metrics[selectedMetric.value]
+  const { timeseries, maxValue, minValue } = selectedMetricData;
 
   const data = timeseries.atTime(selectedDate.toDate()).data();
   const colorScale = scaleSequential()
@@ -57,7 +54,7 @@ export default function HeatmapUSA({
       <h4>{selectedDate.format('MM/DD/YYYY')}</h4>
       <Legend
         colorScale={colorScale}
-        legendTitle={`COVID ${selectedMetric.label}`}
+        legendTitle={`COVID ${timeseries.name()}`}
       />
       <USAMap
         height={250}

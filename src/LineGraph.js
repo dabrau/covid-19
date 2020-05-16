@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import moment from 'moment';
 import {
     Charts,
@@ -14,19 +14,16 @@ import { TimeRange } from 'pondjs';
 import debounce from 'lodash.debounce';
 import throttle from 'lodash.throttle';
 
-import DailyCovidTrackingContext from './DailyCovidTrackingContext';
-
 
 export default function LineGraph({
-  selectedMetric,
   selectedDate,
   onTrackerChanged,
   selectedStates,
   selectedDateRange,
-  updateSelectedDateRange
+  updateSelectedDateRange,
+  selectedMetricData
 }) {
-  const { metrics } = useContext(DailyCovidTrackingContext);
-  const { timeseries } = metrics[selectedMetric.value]
+  const { timeseries } = selectedMetricData;
 
   const { start, end } = selectedDateRange;
   const timeWindow = new TimeRange(start, end);
@@ -109,19 +106,18 @@ export default function LineGraph({
 export function DateRangeSelector({
   selectedDateRange,
   updateSelectedDateRange,
-  selectedMetric,
   selectedDate,
   selectedStates,
+  selectedMetricData
 }) {
-  const { metrics } = useContext(DailyCovidTrackingContext);
-  const { timeseries, maxValue, minValue } = metrics[selectedMetric.value];
+  const { maxValue, minValue, timeseries } = selectedMetricData;
 
   const [timerange, setTimeRange] = useState(new TimeRange(selectedDateRange.start, selectedDateRange.end))
 
   const updateDateRange = debounce(tr => {
     updateSelectedDateRange({start: moment(tr.begin()), end: moment(tr.end())})
-  }, 30);
-  const updateBrushRange = throttle(tr => setTimeRange(tr), 10);
+  }, 100);
+  const updateBrushRange = throttle(tr => setTimeRange(tr), 20);
   const onTimeRangeChanged = tr => {
     updateDateRange(tr);
     updateBrushRange(tr);

@@ -1,20 +1,21 @@
 import React, { useState, useContext, useReducer } from 'react';
 import moment from 'moment';
 import { schemeCategory10 } from 'd3-scale-chromatic';
-import DailyCovidTrackingContext from './DailyCovidTrackingContext';
+import { TimeSeries } from 'pondjs';
+import DailyCovidTrackingContext, { standardizeDate } from './DailyCovidTrackingContext';
 
 
 
 const AppContext = React.createContext(undefined);
 
-const defaultMetric = metricNameToOption('positive')
+const defaultMetric = metricNameToOption('positive');
 const defaultDate = moment('2020-04-12');
 const defaultStartDate =  defaultDate.clone().subtract(7, 'days');
 const defaultEndDate = defaultDate.clone().add(7, 'days');
 
 
 export function AppContextProvider({children}) {
-  const { metricNames } = useContext(DailyCovidTrackingContext);
+  const { metricNames, metrics } = useContext(DailyCovidTrackingContext);
 
   const metricOptions = metricNames
     .filter(m => !['state', 'date'].includes(m))
@@ -56,6 +57,12 @@ export function AppContextProvider({children}) {
       }
   });
 
+  const selectedTimeSeries = selectedMetricToTimeSeries(selectedMetric, metrics);
+  const selectedMetricData = {
+    ...metrics[selectedMetric.value],
+    timeseries: selectedTimeSeries
+  };
+
   const context = {
     metricOptions,
     selectedMetric,
@@ -65,8 +72,9 @@ export function AppContextProvider({children}) {
     selectedDateRange,
     updateSelectedDateRange,
     toggleSelectedState,
-    selectedStates: selectedStates.states
-  }
+    selectedStates: selectedStates.states,
+    selectedMetricData
+  };
 
   return (
     <AppContext.Provider value={context}>
@@ -101,6 +109,29 @@ function camelCaseToWords(str) {
         return x[0].toUpperCase() + x.substr(1).toLowerCase();
     }).join(' ');
 };
+
+function selectedMetricToTimeSeries(metricSelection, metrics) {
+  const { metricsByDate } = metrics[metricSelection.value];
+  const dates = Object.keys(metricsByDate)
+    .map(d => standardizeDate(d))
+    .sort((a, b) => a.unix() - b.unix());
+
+  const states = Array.from(new Set(
+    Object.values(metricsByDate)
+      .flatMap(valueByState => Object.keys(valueByState))
+  ));
+
+  return new TimeSeries({
+    name: metricSelection.value,
+    columns: ['index', ...states],
+    points: dates.map(d => [
+        d.format('YYYY-MM-DD'),
+        ...states.map(s =>
+          metricsByDate[d.format('YYYYMMDD')][s]
+        )
+      ])
+  });
+}
 
 export default AppContext;
 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import moment from 'moment';
-import { TimeSeries } from 'pondjs';
 
 import DailyCovidTracking from './covid_tracking_states_daily_2020-05-09.json'
 
@@ -38,10 +37,9 @@ function transformCovidTracking(covidTrackingData) {
 
   covidTrackingData.forEach(stateData => {
     states.add(stateData.state);
+    const date = standardizeDate(stateData.date);
 
     Object.entries(stateData).forEach(([metric, value]) => {
-      const date = standardizeDate(stateData.date)
-      
       if (!metrics[metric]) {
         metrics[metric] = {
           maxDate: date,
@@ -66,28 +64,6 @@ function transformCovidTracking(covidTrackingData) {
       }
     })
   });
-
-  Object.entries(metrics).forEach(([metricName, metric]) => {
-    const dates = Object.keys(metric.metricsByDate)
-      .map(d => standardizeDate(d))
-      .sort((a, b) => a.unix() - b.unix());
-
-    const states = Array.from(new Set(
-      Object.values(metric.metricsByDate)
-        .flatMap(valueByState => Object.keys(valueByState))
-    ))
-
-    metrics[metricName].timeseries = new TimeSeries({
-      name: metricName,
-      columns: ['index', ...states],
-      points: dates.map(d => [
-          d.format('YYYY-MM-DD'),
-          ...states.map(s =>
-            metric.metricsByDate[d.format('YYYYMMDD')][s]
-          )
-        ])
-    });
-  })
 
   const metricNames = Object.keys(metrics)
 
