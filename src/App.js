@@ -29,35 +29,37 @@ function App(props) {
           <a href="https://covidtracking.com/" target="_blank">The COVID Tracking Project</a>
         </p>
       </div>
-      <div className='side-block'>
-        <Select
-          value={selectedMetric}
-          onChange={updateSelectedMetric}
-          options={metricOptions}
-        />
-        <DateRangeSelector
-          selectedMetricData={selectedMetricData}
-          selectedDate={selectedDate}
-          selectedDateRange={selectedDateRange}
-          updateSelectedDateRange={updateSelectedDateRange}
-          selectedStates={selectedStates}
-        />
-        <HeatmapUSA
-          selectedDate={selectedDate}
-          selectedMetricData={selectedMetricData}
-          toggleSelectedState={toggleSelectedState}
-          selectedStates={selectedStates}
-        />
-      </div>
-      <div className='plots'>
-        <LineGraph
-          selectedDate={selectedDate}
-          onTrackerChanged={updateSelectedDate}
-          selectedStates={selectedStates}
-          selectedMetricData={selectedMetricData}
-          selectedDateRange={selectedDateRange}
-          updateSelectedDateRange={updateSelectedDateRange}
-        />
+      <div className='container'>
+        <div className='side-block'>
+          <Select
+            value={selectedMetric}
+            onChange={updateSelectedMetric}
+            options={metricOptions}
+          />
+          <DateRangeSelector
+            selectedMetricData={selectedMetricData}
+            selectedDate={selectedDate}
+            selectedDateRange={selectedDateRange}
+            updateSelectedDateRange={updateSelectedDateRange}
+            selectedStates={selectedStates}
+          />
+          <HeatmapUSA
+            selectedDate={selectedDate}
+            selectedMetricData={selectedMetricData}
+            toggleSelectedState={toggleSelectedState}
+            selectedStates={selectedStates}
+          />
+        </div>
+        <div className='plots'>
+          <LineGraph
+            selectedDate={selectedDate}
+            onTrackerChanged={updateSelectedDate}
+            selectedStates={selectedStates}
+            selectedMetricData={selectedMetricData}
+            selectedDateRange={selectedDateRange}
+            updateSelectedDateRange={updateSelectedDateRange}
+          />
+        </div>
       </div>
     </div>
   );

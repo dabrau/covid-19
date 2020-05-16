@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import moment from 'moment';
 
-import DailyCovidTracking from './covid_tracking_states_daily_2020-05-09.json'
+import DailyCovidTracking from './covid_tracking_states_daily_2020-05-09'
 
 
 const DailyCovidTrackingContext = React.createContext(undefined);

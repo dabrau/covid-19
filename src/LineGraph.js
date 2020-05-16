@@ -30,7 +30,7 @@ export default function LineGraph({
 
   const [trackerPosition, setTrackerPosition] = useState(selectedDate.toDate());
 
-  const updateDate = debounce(d => onTrackerChanged(moment(d), 30));
+  const updateDate = debounce(d => onTrackerChanged(moment(d), 500));
   const updateTracker = throttle(setTrackerPosition, 10)
 
   const dateSelectionChange = d => {
@@ -39,13 +39,14 @@ export default function LineGraph({
     if (date.isBefore(selectedDate, 'day') || date.isAfter(selectedDate, 'day')) {
       updateDate(date);
     }
-    setTrackerPosition(d)
+    updateTracker(d)
   }
     
   const timeseriesWindow = timeseries.crop(timeWindow);
   const stateMetricLines = Object.entries(selectedStates)
     .map(([state, color]) => {
       const props = {
+          key: state,
           axis: state + 'axis',
           series: timeseriesWindow,
           columns: [state],
@@ -60,6 +61,10 @@ export default function LineGraph({
       const max = timeseriesWindow.collection().max(state);
       const value = timeseriesWindow.atTime(selectedDate.toDate())
         .data().get(state)
+
+      // const min = 1
+      // const max = 2
+      // const value = 3
 
       const axisValues = [
         {label: 'max', value: max},
@@ -79,7 +84,7 @@ export default function LineGraph({
             max={max}
           />
           <Charts>
-            <LineChart key={state} {...props}/>
+            <LineChart {...props}/>
           </Charts>
         </ChartRow>
       );
